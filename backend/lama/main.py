@@ -3,7 +3,7 @@ LAMA^AI Loan Exchange Service - FastAPI Application
 Main entry point for the web service.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from lama.models import LoanApplication
 from lama.repository import Bank, InMemoryBankRepository
@@ -45,21 +45,23 @@ app.add_middleware(
 
 
 @app.post("/match", response_model=list[str])
-def match_lenders(application: LoanApplication) -> list[str]:
+def match_lenders(application: LoanApplication, limit: int = Query(MATCHING_LIMIT, ge=1, le=100)) -> list[str]:
     """
     Match a loan application with eligible lenders.
 
     The service evaluates the application against each bank's constraints
     in descending order by constraint count (most selective banks first).
-    Early-exit optimization: stops after finding MATCHING_LIMIT eligible banks.
+    Early-exit optimization: stops after finding 'limit' eligible banks.
 
     Args:
         application: The loan application to match.
+        limit: Maximum number of banks to return (default: MATCHING_LIMIT, range: 1-100).
 
     Returns:
-        List of bank names that match the application's eligibility criteria.
+        List of bank names that match the application's eligibility criteria, up to 'limit' results.
     """
-    return matching_service.find_matching_banks(application)
+    service = MatchingService(repository, match_limit=limit)
+    return service.find_matching_banks(application)
 
 
 @app.get("/health")
