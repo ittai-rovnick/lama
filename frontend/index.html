@@ -522,12 +522,9 @@
 
                     <!-- Number of Banks to Display -->
                     <div class="form-group">
-                        <label for="bankLimit">Number of Banks to Display (1-100)</label>
-                        <div class="range-container">
-                            <input type="range" id="bankLimit" name="bankLimit"
-                                   min="1" max="100" value="5" required>
-                            <span class="risk-value" id="bankLimitValue">5</span>
-                        </div>
+                        <label for="bankLimit">Number of Banks to Display</label>
+                        <input type="number" id="bankLimit" name="bankLimit"
+                               value="2" min="1" max="100" required>
                     </div>
 
                     <!-- Submit Button -->
@@ -561,8 +558,6 @@
         const industryInput = document.getElementById('industry');
         const riskLevelInput = document.getElementById('riskLevel');
         const riskValueSpan = document.getElementById('riskValue');
-        const bankLimitInput = document.getElementById('bankLimit');
-        const bankLimitValueSpan = document.getElementById('bankLimitValue');
         const submitBtn = document.getElementById('submitBtn');
         const resultsContent = document.getElementById('resultsContent');
         const apiUrlInput = document.getElementById('apiUrl');
@@ -570,11 +565,6 @@
         // Update risk level display
         riskLevelInput.addEventListener('input', (e) => {
             riskValueSpan.textContent = e.target.value;
-        });
-
-        // Update bank limit display
-        bankLimitInput.addEventListener('input', (e) => {
-            bankLimitValueSpan.textContent = e.target.value;
         });
 
         // Toggle industry field based on borrower type
