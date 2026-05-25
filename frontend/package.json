@@ -1,0 +1,19 @@
+{
+  "name": "lama-ai-frontend",
+  "version": "1.0.0",
+  "description": "LAMA^AI Loan Exchange - Frontend UI",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 3000",
+    "test": "bash test_frontend.sh"
+  },
+  "keywords": [
+    "lama",
+    "loan",
+    "exchange",
+    "frontend"
+  ],
+  "author": "LAMA^AI Team",
+  "license": "MIT",
+  "homepage": "../docs/"
+}
