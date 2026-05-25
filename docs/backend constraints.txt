@@ -1,0 +1,245 @@
+================================================================================
+BACKEND CONSTRAINTS - DETAILED EXPLANATION
+================================================================================
+
+ARCHITECTURE OVERVIEW
+================================================================================
+
+LoanApplication (from frontend)
+         ↓
+   MatchingService
+         ↓
+  BankRepository (gets all banks)
+         ↓
+    Bank.matches()
+         ↓
+  Check ALL constraints
+         ↓
+   Return matching banks
+
+
+CONSTRAINT TYPES
+================================================================================
+
+Each constraint is a separate class that checks ONE eligibility rule.
+
+
+1. LoanTypeConstraint
+-------------------
+class LoanTypeConstraint(LoanConstraint):
+    def __init__(self, required_type: str):
+        self.required_type = required_type
+
+    def is_satisfied(self, application: LoanApplication) -> bool:
+        return application.loanType == self.required_type
+
+Purpose: Bank only accepts specific loan types (e.g., "Student Loan")
+Returns: True if application's loan type matches
+
+
+2. StateConstraint
+------------------
+def is_satisfied(self, application: LoanApplication) -> bool:
+    return application.state == self.required_state
+
+Purpose: Bank only operates in specific states (e.g., "CA")
+Returns: True if applicant's state matches
+
+
+3. RiskLevelConstraint
+----------------------
+def is_satisfied(self, application: LoanApplication) -> bool:
+    return application.riskLevel < self.max_risk
+
+Purpose: Bank has a maximum risk tolerance (e.g., max 75)
+Returns: True if applicant's risk level is BELOW max_risk
+Note: If applicant's risk is >= max_risk → REJECTED
+
+
+4. RequestedAmountConstraint
+----------------------------
+def is_satisfied(self, application: LoanApplication) -> bool:
+    if self.min_amount is not None and application.requestedAmount < self.min_amount:
+        return False
+    if self.max_amount is not None and application.requestedAmount >= self.max_amount:
+        return False
+    return True
+
+Purpose: Bank accepts loans in a specific range (e.g., $5,000 to $100,000)
+Returns: True if requested amount falls within the range
+Note: If amount is outside range → REJECTED
+
+
+5. BorrowerTypeConstraint
+--------------------------
+def is_satisfied(self, application: LoanApplication) -> bool:
+    return application.borrowerType == self.required_type
+
+Purpose: Borrower must be specific type (consumer or business)
+Returns: True if borrower type matches
+
+
+6. IndustryConstraint
+---------------------
+def is_satisfied(self, application: LoanApplication) -> bool:
+    return (application.industry and
+            application.industry.lower() == self.required_industry.lower())
+
+Purpose: Industry must match a specific industry (for business loans)
+Returns: True if industry matches (case-insensitive comparison)
+
+
+HOW BANKS USE CONSTRAINTS
+================================================================================
+
+class Bank:
+    def __init__(self, name: str, constraints: List[LoanConstraint]):
+        self.name = name
+        self.constraints = constraints  # List of constraint objects
+
+    def matches(self, application: LoanApplication) -> bool:
+        return all(constraint.is_satisfied(application) for constraint in self.constraints)
+
+KEY POINT: all() means ALL constraints must pass for a match.
+
+Example: If a bank has:
+  - RiskLevelConstraint(max_risk=50)
+  - StateConstraint(required_state="CA")
+  - RequestedAmountConstraint(min_amount=5000, max_amount=100000)
+
+Then an applicant must satisfy ALL 3 constraints to get approved by that bank.
+
+
+THE MATCHING ALGORITHM
+================================================================================
+
+def find_matching_banks(self, application: LoanApplication) -> list[str]:
+    matching_banks = []
+
+    for bank in self.repository.get_all_banks():
+        if bank.matches(application):  # Check ALL constraints
+            matching_banks.append(bank.name)
+
+            if len(matching_banks) >= self.match_limit:  # Stop early
+                break
+
+    return matching_banks
+
+FLOW:
+  1. Get all banks from repository
+  2. For each bank, call bank.matches(application) which:
+     - Loops through all that bank's constraints
+     - Checks constraint.is_satisfied(application) for each
+     - Returns True only if ALL constraints pass
+  3. If match found → add to results
+  4. Early-exit: Stop when we have enough matches (performance optimization)
+
+
+CONCRETE EXAMPLE
+================================================================================
+
+Frontend sends:
+{
+  "borrowerType": "consumer",
+  "loanType": "Student Loan",
+  "requestedAmount": 30000,
+  "state": "CA",
+  "riskLevel": 75,
+  "currentYearIncome": 20000,
+  "previousYearIncome": 25000
+}
+
+Evaluation against Bank 1:
+Bank 1 constraints:
+  ✅ LoanTypeConstraint("Student Loan")
+     → application.loanType == "Student Loan" = TRUE
+
+  ✅ StateConstraint("CA")
+     → application.state == "CA" = TRUE
+
+  ✅ RiskLevelConstraint(80)
+     → 75 < 80 = TRUE
+
+  ✅ RequestedAmountConstraint(10000, 100000)
+     → 10000 ≤ 30000 < 100000 = TRUE
+
+Result: ALL constraints satisfied → Bank 1 MATCHES ✅
+
+
+Evaluation against Bank 2:
+Bank 2 constraints:
+  ❌ BorrowerTypeConstraint("business")
+     → "consumer" == "business" = FALSE
+
+  (Stops here - one constraint failed, no need to check rest)
+
+Result: Not all constraints satisfied → Bank 2 does NOT match ❌
+
+
+KEY DESIGN PRINCIPLES
+================================================================================
+
+1. SINGLE RESPONSIBILITY
+   - Each constraint class does ONE thing: checks one eligibility rule
+   - Easy to understand and maintain
+
+2. STRATEGY PATTERN
+   - Constraints are interchangeable strategies
+   - Easy to add new constraint types without modifying existing code
+   - All constraints follow the same interface: is_satisfied()
+
+3. COMPOSABILITY
+   - Banks combine multiple constraints to define their lending profile
+   - Constraints work together seamlessly
+
+4. TESTABILITY
+   - Each constraint can be tested independently
+   - Each bank's matching logic can be tested separately
+
+5. ALL-OR-NOTHING MATCHING
+   - Every bank's constraint must be satisfied for a match
+   - This ensures strict eligibility standards
+
+
+CONSTRAINT EXECUTION ORDER
+================================================================================
+
+When matching an application:
+  1. Service gets banks from repository (sorted by constraint count)
+  2. For each bank:
+     a. Call bank.matches(application)
+     b. Inside matches():
+        - Loop through all bank constraints
+        - Check each constraint.is_satisfied(application)
+        - Use Python's all() function: if ANY constraint returns False, stop
+     c. If all() returns True, bank is added to results
+  3. Stop early when match_limit is reached
+
+
+PERFORMANCE OPTIMIZATION
+================================================================================
+
+Early-Exit Strategy:
+  - Banks are checked in order (highest constraint count first)
+  - Stops as soon as match_limit matching banks are found
+  - Avoids checking all banks if we already have enough matches
+  - Significant performance improvement with large bank datasets
+
+Example:
+  - match_limit = 2
+  - Found 2 matching banks after checking 3 banks
+  - Stop immediately, don't check remaining 50 banks
+
+
+ERROR HANDLING
+================================================================================
+
+Pydantic Validation (frontend data):
+  - LoanApplication uses Pydantic BaseModel
+  - Invalid data types are rejected before reaching matching logic
+  - Optional fields like industry only checked by IndustryConstraint
+
+Constraint Logic:
+  - Safe comparisons (handles None values)
+  - IndustryConstraint checks if industry exists before comparing
+  - RequestedAmountConstraint handles optional min/max bounds
