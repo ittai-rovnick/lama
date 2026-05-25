@@ -4,6 +4,7 @@ Main entry point for the web service.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from lama.models import LoanApplication
 from lama.repository import Bank, InMemoryBankRepository
 from lama.services import MatchingService
@@ -27,6 +28,15 @@ app = FastAPI(
     title="LAMA^AI Loan Exchange Service",
     description="Matches loan applications with eligible lenders based on constraints",
     version="1.0.0",
+)
+
+# Enable CORS for frontend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ============================================================================
