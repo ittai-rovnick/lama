@@ -438,6 +438,59 @@
             margin-bottom: 5px;
             font-weight: 500;
         }
+
+        .examples-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .examples-title {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .examples-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .example-btn {
+            width: 100%;
+            padding: 12px 15px;
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .example-btn:hover {
+            background: #e8e8ff;
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateX(4px);
+        }
+
+        .example-btn-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .example-btn-desc {
+            display: block;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -529,6 +582,25 @@
 
                     <!-- Submit Button -->
                     <button type="submit" id="submitBtn">Find Matching Banks</button>
+
+                    <!-- Quick Examples -->
+                    <div class="examples-section">
+                        <div class="examples-title">📋 Quick Examples</div>
+                        <div class="examples-grid">
+                            <button type="button" class="example-btn" id="example1Btn">
+                                <span class="example-btn-label">Example 1: No Matches</span>
+                                <span class="example-btn-desc">Business, Line of Credit, NY, High Risk</span>
+                            </button>
+                            <button type="button" class="example-btn" id="example2Btn">
+                                <span class="example-btn-label">Example 2: Filtered Selection</span>
+                                <span class="example-btn-desc">Consumer, Student Loan, CA, Risk 75</span>
+                            </button>
+                            <button type="button" class="example-btn" id="example3Btn">
+                                <span class="example-btn-label">Example 3: Priority Sorting</span>
+                                <span class="example-btn-desc">Consumer, Student Loan, CA, Risk 55</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- API URL Configuration -->
                     <div class="api-url-input">
@@ -698,6 +770,88 @@
 
         // Set initial state
         industryInput.disabled = true;
+
+        // Example data
+        const examples = {
+            example1: {
+                borrowerType: "business",
+                loanType: "Line Of Credit",
+                state: "NY",
+                riskLevel: 90,
+                industry: "agriculture",
+                requestedAmount: 1000000,
+                currentYearIncome: 30000,
+                previousYearIncome: 45000,
+                bankLimit: 2
+            },
+            example2: {
+                borrowerType: "consumer",
+                loanType: "Student Loan",
+                state: "CA",
+                riskLevel: 75,
+                requestedAmount: 30000,
+                currentYearIncome: 20000,
+                previousYearIncome: 25000,
+                bankLimit: 2
+            },
+            example3: {
+                borrowerType: "consumer",
+                loanType: "Student Loan",
+                state: "CA",
+                riskLevel: 55,
+                requestedAmount: 30000,
+                currentYearIncome: 30000,
+                previousYearIncome: 45000,
+                bankLimit: 2
+            }
+        };
+
+        // Function to load example data
+        function loadExample(exampleKey) {
+            const example = examples[exampleKey];
+            if (!example) return;
+
+            // Set form values
+            document.getElementById('borrowerType').value = example.borrowerType;
+            document.getElementById('loanType').value = example.loanType;
+            document.getElementById('state').value = example.state;
+            document.getElementById('riskLevel').value = example.riskLevel;
+            document.getElementById('requestedAmount').value = example.requestedAmount;
+            document.getElementById('currentYearIncome').value = example.currentYearIncome;
+            document.getElementById('previousYearIncome').value = example.previousYearIncome;
+            document.getElementById('bankLimit').value = example.bankLimit;
+
+            // Update risk level display
+            riskValueSpan.textContent = example.riskLevel;
+
+            // Toggle industry field based on borrower type
+            const isBusiness = example.borrowerType === 'business';
+            industryInput.disabled = !isBusiness;
+            if (isBusiness && example.industry) {
+                industryInput.value = example.industry;
+            } else {
+                industryInput.value = '';
+            }
+
+            // Scroll to top of form
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Add event listeners to example buttons
+        document.getElementById('example1Btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            loadExample('example1');
+        });
+
+        document.getElementById('example2Btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            loadExample('example2');
+        });
+
+        document.getElementById('example3Btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            loadExample('example3');
+        });
     </script>
 </body>
 </html>
